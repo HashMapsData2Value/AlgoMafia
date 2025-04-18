@@ -25,7 +25,7 @@ export const stateGameOver = stateDawnStageUnmasking + 1
 
 export const jdenticonConfig = {
   backColor: '#000000',
-  hues: null,
+  hues: undefined,
   lightness: {
     color: [0.4, 0.8],
     grayscale: [0.3, 0.9],
