@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { useWallet } from '@txnlab/use-wallet-react'
 import * as algoring from 'algoring-ts'
@@ -71,7 +72,6 @@ async function assignRoleCall(playerObject: Player) {
     algoring.from_pxpy(ring.slice(5 * BLS12381G1_LENGTH, 6 * BLS12381G1_LENGTH)),
   ]
 
-  // eslint-disable-next-line no-restricted-syntax
   const msg = Buffer.concat([
     algosdk.decodeAddress(playerObject.night_algo_address.addr.toString()).publicKey,
     algosdk.decodeAddress(playerObject.night_client.appClient.appAddress.toString()).publicKey,
@@ -95,9 +95,7 @@ async function assignRoleCall(playerObject: Player) {
 
   const length = intermediateValues.length / RING_SIG_CHALL_LENGTH
 
-  // eslint-disable-next-line no-plusplus
   for (let i = 0; i < length; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const { lSigRingSigPayTxn, lSigRingSigSigner } = await prepareLSigRingLink(
       i,
       playerObject.night_client,

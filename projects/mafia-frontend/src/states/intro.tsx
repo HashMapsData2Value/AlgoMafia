@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useSnackbar } from 'notistack'
@@ -13,7 +14,6 @@ interface IntroProps {
 
 const Intro: React.FC<IntroProps> = ({ setGameState, setAppId }) => {
   const [inputAppId, setInputAppId] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
 
   const { transactionSigner, activeAddress } = useWallet()
 
@@ -31,11 +31,12 @@ const Intro: React.FC<IntroProps> = ({ setGameState, setAppId }) => {
   const handleProceed = async () => {
     if (inputAppId.trim()) {
       try {
-
         // If app doesn't exist, this will throw an error:
-        await (await algorand.client.getTypedAppClientById(TownHallClient, {
-          appId: BigInt(inputAppId),
-        })).state.global.player1AlgoAddr()
+        await (
+          await algorand.client.getTypedAppClientById(TownHallClient, {
+            appId: BigInt(inputAppId),
+          })
+        ).state.global.player1AlgoAddr()
 
         setAppId(BigInt(inputAppId))
         setGameState(GameState.JoinGameLobby)
@@ -50,7 +51,6 @@ const Intro: React.FC<IntroProps> = ({ setGameState, setAppId }) => {
 
   const handleCreateNewGame = async () => {
     console.log('Creating a new game...')
-    setLoading(true)
 
     const factory = new TownHallFactory({
       defaultSender: activeAddress ?? undefined,
@@ -59,7 +59,6 @@ const Intro: React.FC<IntroProps> = ({ setGameState, setAppId }) => {
 
     const deployResult = await factory.send.create.createApplication().catch((e: Error) => {
       enqueueSnackbar(`Error deploying the contract: ${e.message}`, { variant: 'error' })
-      setLoading(false)
       return undefined
     })
 

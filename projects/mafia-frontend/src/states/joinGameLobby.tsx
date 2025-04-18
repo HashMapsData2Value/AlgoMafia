@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { useWallet } from '@txnlab/use-wallet-react'
 import * as algoring from 'algoring-ts'

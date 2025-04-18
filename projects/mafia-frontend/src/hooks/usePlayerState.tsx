@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Player } from '../interfaces/player'
