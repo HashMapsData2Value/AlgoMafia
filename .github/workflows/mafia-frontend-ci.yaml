@@ -1,9 +1,10 @@
 name: Validate mafia-frontend
 
 on:
-  
+  pull_request:
+    branches:
+      - main
   workflow_call:
-  
 
 jobs:
   validate:
@@ -34,14 +35,11 @@ jobs:
       - name: Install dependencies
         run: algokit project bootstrap all --project-name 'mafia-frontend'
 
-      
       - name: Run linters
         run: algokit project run lint --project-name 'mafia-frontend'
-      
-      
+
       - name: Run unit tests
         run: algokit project run test --project-name 'mafia-frontend'
-      
 
       - name: Build
         run: algokit project run build --project-name 'mafia-frontend'
