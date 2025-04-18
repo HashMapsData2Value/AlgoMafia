@@ -1,8 +1,8 @@
 import algosdk from 'algosdk'
 import { createHash, randomBytes } from 'crypto'
+import PlayerPickPanel from '../components/PlayerPickPanel'
 import usePlayersState from '../hooks/usePlayerState'
 import { Player } from '../interfaces/player'
-import { ellipseAddress } from '../utils/ellipseAddress'
 
 interface NightStageMafiaCommitProps {
   playerObject: Player
@@ -35,18 +35,13 @@ const NightStageMafiaCommit: React.FC<NightStageMafiaCommitProps> = ({ playerObj
       <h1>NightStageMafiaCommit</h1>
       {iAmMafia ? (
         potentialVictims.length > 0 ? (
-          <ul className="list-disc list-inside">
-            {potentialVictims.map((player, i) => (
-              <li key={i + 1} className="py-2">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleMafiaCommit(player)} // Pass the correct player number
-                >
-                  {`Player: ${i + 1}`}: {ellipseAddress(player)}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <PlayerPickPanel
+            players={potentialVictims}
+            currentPlayerAddress={playerObject.day_algo_address.addr.toString()}
+            onSelect={(player: string) => {
+              handleMafiaCommit(player)
+            }}
+          />
         ) : (
           <p>Error: No players available to vote for.</p>
         )

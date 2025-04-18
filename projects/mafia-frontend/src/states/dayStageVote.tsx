@@ -1,21 +1,22 @@
 import React from 'react'
+import PlayerPickPanel from '../components/PlayerPickPanel'
 import usePlayersState from '../hooks/usePlayerState'
 import { Player } from '../interfaces/player'
-import { ellipseAddress } from '../utils/ellipseAddress'
 
 interface DayStageVoteProps {
   playerObject: Player
 }
 
 const DayStageVote: React.FC<DayStageVoteProps> = ({ playerObject }) => {
-  const { playerHasVoted, players, playerIsDead } = usePlayersState(playerObject)
+  console.log('DayStageVote component rendered')
+  const { playerHasVoted, players, playerIsDead, allPlayers } = usePlayersState(playerObject)
 
   const handleVote = async (playerNumber: number) => {
     console.log(`Voted for player ${playerNumber}`)
 
     const voteResult = await playerObject.day_client.send.dayStageVote({
       args: {
-        vote: playerNumber,
+        vote: playerNumber, // Pass the correct player number (1 to 6)
       },
     })
 
@@ -35,20 +36,22 @@ const DayStageVote: React.FC<DayStageVoteProps> = ({ playerObject }) => {
         <>
           <p className="py-4">Who do you want to vote for?</p>
           {players.length > 0 ? (
-            <ul className="list-disc list-inside">
-              {players.map((player, i) => (
-                <li key={i + 1} className="py-2">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleVote(i + 1)} // Pass the correct player number
-                  >
-                    {`Player ${i + 1}`}: {ellipseAddress(player)}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <PlayerPickPanel
+              players={players}
+              currentPlayerAddress={playerObject.day_algo_address.addr.toString()}
+              onSelect={(player: string) => {
+                // Map the selected player back to their original number (1 to 6)
+                const playerNumber = allPlayers.findIndex((p) => p === player) + 1
+                if (playerNumber > 0) {
+                  console.log(`Selected player: ${player}, Player number: ${playerNumber}`)
+                  handleVote(playerNumber)
+                } else {
+                  console.error(`Player ${player} not found in allPlayers`)
+                }
+              }}
+            />
           ) : (
-            <p>Error: No players available to vote for.</p>
+            <p>No players available to vote for.</p>
           )}
         </>
       )}

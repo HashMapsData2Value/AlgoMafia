@@ -2,10 +2,10 @@ import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { useWallet } from '@txnlab/use-wallet-react'
 import * as algoring from 'algoring-ts'
 import React from 'react'
+import PlayerPickPanel from '../components/PlayerPickPanel'
 import usePlayersState from '../hooks/usePlayerState'
 import { Player } from '../interfaces/player'
 import { BLS12381G1_LENGTH, RING_SIG_NONCE_LENGTH } from '../utils/constants'
-import { ellipseAddress } from '../utils/ellipseAddress'
 import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 
 interface JoinGameLobbyProps {
@@ -111,17 +111,7 @@ const JoinGameLobby: React.FC<JoinGameLobbyProps> = ({ playerObject }) => {
       <p className="py-4">Waiting for players to join...</p>
 
       {players.length > 0 ? (
-        <ul className="list-disc list-inside">
-          {players.map((player, index) => (
-            <li key={index} className="py-1">
-              {player === playerObject.day_algo_address.addr.toString() ? (
-                <strong>{ellipseAddress(player)}</strong>
-              ) : (
-                <span>{ellipseAddress(player)}</span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <PlayerPickPanel players={players} currentPlayerAddress={playerObject.day_algo_address.addr.toString()} />
       ) : (
         <p>No players in the lobby yet.</p>
       )}

@@ -115,6 +115,7 @@ const usePlayersState = (playerObject: Player) => {
 
   return {
     players,
+    allPlayers: playersQuery.data?.allPlayers || [],
     playerHasVoted,
     playerIsDead,
     iAmMafia,

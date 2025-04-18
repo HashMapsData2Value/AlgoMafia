@@ -1,8 +1,8 @@
 import algosdk from 'algosdk'
 import { createHash, randomBytes } from 'crypto'
+import PlayerPickPanel from '../components/PlayerPickPanel'
 import usePlayersState from '../hooks/usePlayerState'
 import { Player } from '../interfaces/player'
-import { ellipseAddress } from '../utils/ellipseAddress'
 
 interface NightStageDoctorCommitProps {
   playerObject: Player
@@ -35,18 +35,14 @@ const NightStageDoctorCommit: React.FC<NightStageDoctorCommitProps> = ({ playerO
       <h1>NightStageDoctorCommit</h1>
       {iAmDoctor ? (
         potentialPatients.length > 0 ? (
-          <ul className="list-disc list-inside">
-            {potentialPatients.map((player, i) => (
-              <li key={i + 1} className="py-2">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleDoctorCommit(player)} // Pass the correct player number
-                >
-                  {`Player: ${i + 1}`}: {ellipseAddress(player)}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <PlayerPickPanel
+            players={potentialPatients}
+            currentPlayerAddress={playerObject.day_algo_address.addr.toString()}
+            allowSelfSelect={true}
+            onSelect={(player: string) => {
+              handleDoctorCommit(player)
+            }}
+          />
         ) : (
           <p>Error: No players available to vote for.</p>
         )

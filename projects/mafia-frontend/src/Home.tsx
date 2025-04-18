@@ -20,9 +20,9 @@ import NightStageDoctorCommit from './states/NightStageDoctorCommit'
 import NightStageMafiaCommit from './states/NightStageMafiaCommit'
 
 import { useQuery } from '@tanstack/react-query'
+import Navbar from './components/NavBar'
 
 // Audio
-import { FaPause, FaPlay } from 'react-icons/fa' // Import play/pause icons
 
 const Home: React.FC = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
@@ -130,28 +130,20 @@ const Home: React.FC = () => {
 
   return (
     <div className="hero min-h-screen relative">
-      {/* "NavBar" */}
+      <Navbar
+        appId={appId}
+        activeAddress={activeAddress ?? undefined}
+        isPlaying={isPlaying}
+        toggleAudio={toggleAudio}
+        openWalletModal={toggleWalletModal}
+        currentPlayerAddress={playerObject?.day_algo_address.addr.toString() ?? undefined}
+      />
 
-      <div className="absolute top-0 left-0 w-full bg-gray-800 bg-opacity-50 text-white p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Infiltrated</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm">{appId === BigInt(0) ? 'Not joined' : `Game ID: ${appId.toString()}`}</span>
-          <button className="btn btn-primary" onClick={() => setOpenWalletModal(true)}>
-            {activeAddress}
-          </button>
-          <button className="btn btn-secondary" onClick={toggleAudio}>
-            {isPlaying ? <FaPause /> : <FaPlay />}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
       <div className="hero-content text-center rounded-lg p-6 max-w-md bg-white bg-opacity-90 mx-auto relative z-10">
         {renderGameState()}
         <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
       </div>
 
-      {/* Background Music */}
       <audio id="background-music" loop>
         <source src="/song-1.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
