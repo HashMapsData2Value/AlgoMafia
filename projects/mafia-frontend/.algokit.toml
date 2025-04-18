@@ -11,5 +11,5 @@ build = { commands = ['npm run build'], description = 'Build frontend' }
 test = { commands = ['npm run test'], description = 'Run frontend tests' }
 lint = { commands = ['npm run lint'], description = 'Lint frontend code' }
 check-uncommitted = { commands = [
-  'sh -c "if [ -n \\"$(git status --porcelain dist/)\\" ]; then echo \\"Uncommitted changes detected in dist/ folder. Please commit them.\\"; exit 1; else echo \\"No uncommitted changes in dist/ folder.\\"; fi"',
+  'npm run check-uncommitted',
 ], description = 'Check for uncommitted changes in dist/ folder after build' }

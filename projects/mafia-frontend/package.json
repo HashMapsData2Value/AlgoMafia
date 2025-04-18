@@ -60,10 +60,8 @@
     "playwright:test": "playwright test",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
-    "ci:vercel:build": "vercel build --prod --token=$VERCEL_TOKEN",
-    "ci:vercel:pull": "vercel pull --yes --environment=production --token=$VERCEL_TOKEN",
-    "ci:vercel:deploy": "npm run ci:vercel:build && vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check-uncommitted": "if git diff --quiet dist/; then echo 'No uncommitted changes in dist/ folder.'; else echo 'Uncommitted changes detected in dist/ folder. Please commit them.' && exit 1; fi"
   },
   "eslintConfig": {
     "extends": [
