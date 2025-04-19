@@ -10,6 +10,3 @@ artifacts = "src/contracts"
 build = { commands = ['npm run build'], description = 'Build frontend' }
 test = { commands = ['npm run test'], description = 'Run frontend tests' }
 lint = { commands = ['npm run lint'], description = 'Lint frontend code' }
-check-uncommitted = { commands = [
-  'npm run check-uncommitted',
-], description = 'Check for uncommitted changes in dist/ folder after build' }

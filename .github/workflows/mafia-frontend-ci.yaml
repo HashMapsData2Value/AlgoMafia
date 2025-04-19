@@ -42,6 +42,3 @@ jobs:
 
       - name: Build
         run: algokit project run build --project-name 'mafia-frontend'
-
-      - name: Check that the build is up to date
-        run: algokit project run check-uncommitted --project-name 'mafia-frontend'

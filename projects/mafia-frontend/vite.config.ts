@@ -10,9 +10,13 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
+        assetFileNames: '[name].[ext]',
+        manualChunks: undefined,
       }
     }
+  },
+  define: {
+    'process.env': {},
   },
   plugins: [
     react(),

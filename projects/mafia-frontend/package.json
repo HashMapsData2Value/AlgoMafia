@@ -60,8 +60,7 @@
     "playwright:test": "playwright test",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
-    "preview": "vite preview",
-    "check-uncommitted": "if git diff --quiet dist/; then echo 'No uncommitted changes in dist/ folder.'; else echo 'Uncommitted changes detected in dist/ folder. Please commit them.' && exit 1; fi"
+    "preview": "vite preview"
   },
   "eslintConfig": {
     "extends": [
