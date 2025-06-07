@@ -27,23 +27,24 @@ import { RingLinkLSig3 } from './RingLinkLSig3.algo';
 import { RingLinkLSig4 } from './RingLinkLSig4.algo';
 import { RingLinkLSig5 } from './RingLinkLSig5.algo';
 
+type PlayerRecord = { address: Address; eliminated: uint64 };
 // Would ideally be an ENUM but they are not supported at this point
 
 export class TownHall extends Contract {
   creatorAddress = GlobalStateKey<Address>();
   // Players:
 
-  player1AlgoAddr = GlobalStateKey<Address>();
+  player1AlgoAddr = GlobalStateKey<PlayerRecord>();
 
-  player2AlgoAddr = GlobalStateKey<Address>();
+  player2AlgoAddr = GlobalStateKey<PlayerRecord>();
 
-  player3AlgoAddr = GlobalStateKey<Address>();
+  player3AlgoAddr = GlobalStateKey<PlayerRecord>();
 
-  player4AlgoAddr = GlobalStateKey<Address>();
+  player4AlgoAddr = GlobalStateKey<PlayerRecord>();
 
-  player5AlgoAddr = GlobalStateKey<Address>();
+  player5AlgoAddr = GlobalStateKey<PlayerRecord>();
 
-  player6AlgoAddr = GlobalStateKey<Address>();
+  player6AlgoAddr = GlobalStateKey<PlayerRecord>();
 
   // Roles:
   mafia = GlobalStateKey<Address>();
@@ -56,11 +57,19 @@ export class TownHall extends Contract {
 
   farmer = GlobalStateKey<Address>();
 
+  farmerKeyImage = GlobalStateKey<bytes>();
+
   butcher = GlobalStateKey<Address>();
+
+  butcherKeyImage = GlobalStateKey<bytes>();
 
   innkeep = GlobalStateKey<Address>();
 
+  innkeepKeyImage = GlobalStateKey<bytes>();
+
   grocer = GlobalStateKey<Address>();
+
+  grocerKeyImage = GlobalStateKey<bytes>();
 
   // Ring Signature State:
   lsigFunderAddress = GlobalStateKey<Address>(); // The address of the FunderLSig, which is used to fund the night algo address
@@ -126,12 +135,12 @@ export class TownHall extends Contract {
 
     this.lsigFunderAddress.value = globals.zeroAddress;
 
-    this.player1AlgoAddr.value = globals.zeroAddress;
-    this.player2AlgoAddr.value = globals.zeroAddress;
-    this.player3AlgoAddr.value = globals.zeroAddress;
-    this.player4AlgoAddr.value = globals.zeroAddress;
-    this.player5AlgoAddr.value = globals.zeroAddress;
-    this.player6AlgoAddr.value = globals.zeroAddress;
+    this.player1AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
+    this.player2AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
+    this.player3AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
+    this.player4AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
+    this.player5AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
+    this.player6AlgoAddr.value = { address: globals.zeroAddress, eliminated: 0 };
 
     this.mafia.value = globals.zeroAddress;
     this.doctor.value = globals.zeroAddress;
@@ -248,12 +257,12 @@ export class TownHall extends Contract {
     );
 
     if (
-      this.player1AlgoAddr.value === this.txn.sender ||
-      this.player2AlgoAddr.value === this.txn.sender ||
-      this.player3AlgoAddr.value === this.txn.sender ||
-      this.player4AlgoAddr.value === this.txn.sender ||
-      this.player5AlgoAddr.value === this.txn.sender ||
-      this.player6AlgoAddr.value === this.txn.sender
+      this.player1AlgoAddr.value.address === this.txn.sender ||
+      this.player2AlgoAddr.value.address === this.txn.sender ||
+      this.player3AlgoAddr.value.address === this.txn.sender ||
+      this.player4AlgoAddr.value.address === this.txn.sender ||
+      this.player5AlgoAddr.value.address === this.txn.sender ||
+      this.player6AlgoAddr.value.address === this.txn.sender
     ) {
       throw Error('Error state: Player already joined the game!');
     }
@@ -292,28 +301,28 @@ export class TownHall extends Contract {
       receiver: this.lsigFunderAddress.value,
     });
 
-    if (this.player1AlgoAddr.value === globals.zeroAddress) {
-      this.player1AlgoAddr.value = this.txn.sender;
+    if (this.player1AlgoAddr.value.address === globals.zeroAddress) {
+      this.player1AlgoAddr.value.address = this.txn.sender;
       return;
     }
-    if (this.player2AlgoAddr.value === globals.zeroAddress) {
-      this.player2AlgoAddr.value = this.txn.sender;
+    if (this.player2AlgoAddr.value.address === globals.zeroAddress) {
+      this.player2AlgoAddr.value.address = this.txn.sender;
       return;
     }
-    if (this.player3AlgoAddr.value === globals.zeroAddress) {
-      this.player3AlgoAddr.value = this.txn.sender;
+    if (this.player3AlgoAddr.value.address === globals.zeroAddress) {
+      this.player3AlgoAddr.value.address = this.txn.sender;
       return;
     }
-    if (this.player4AlgoAddr.value === globals.zeroAddress) {
-      this.player4AlgoAddr.value = this.txn.sender;
+    if (this.player4AlgoAddr.value.address === globals.zeroAddress) {
+      this.player4AlgoAddr.value.address = this.txn.sender;
       return;
     }
-    if (this.player5AlgoAddr.value === globals.zeroAddress) {
-      this.player5AlgoAddr.value = this.txn.sender;
+    if (this.player5AlgoAddr.value.address === globals.zeroAddress) {
+      this.player5AlgoAddr.value.address = this.txn.sender;
       return;
     }
-    if (this.player6AlgoAddr.value === globals.zeroAddress) {
-      this.player6AlgoAddr.value = this.txn.sender;
+    if (this.player6AlgoAddr.value.address === globals.zeroAddress) {
+      this.player6AlgoAddr.value.address = this.txn.sender;
       this.gameState.value = stateAssignRole; // Go to next stage.
       return;
     }
@@ -393,18 +402,22 @@ export class TownHall extends Contract {
     }
     if (this.farmer.value === globals.zeroAddress) {
       this.farmer.value = this.txn.sender;
+      this.farmerKeyImage.value = keyImage;
       return;
     }
     if (this.butcher.value === globals.zeroAddress) {
       this.butcher.value = this.txn.sender;
+      this.butcherKeyImage.value = keyImage;
       return;
     }
     if (this.innkeep.value === globals.zeroAddress) {
       this.innkeep.value = this.txn.sender;
+      this.innkeepKeyImage.value = keyImage;
       return;
     }
     if (this.grocer.value === globals.zeroAddress) {
       this.grocer.value = this.txn.sender;
+      this.grocerKeyImage.value = keyImage;
       this.gameState.value = stateDayStageVote; // Go to day
       return;
     }
@@ -419,44 +432,44 @@ export class TownHall extends Contract {
 
     if (
       !(
-        this.txn.sender === this.player1AlgoAddr.value ||
-        this.txn.sender === this.player2AlgoAddr.value ||
-        this.txn.sender === this.player3AlgoAddr.value ||
-        this.txn.sender === this.player4AlgoAddr.value ||
-        this.txn.sender === this.player5AlgoAddr.value ||
-        this.txn.sender === this.player6AlgoAddr.value
+        this.txn.sender === this.player1AlgoAddr.value.address ||
+        this.txn.sender === this.player2AlgoAddr.value.address ||
+        this.txn.sender === this.player3AlgoAddr.value.address ||
+        this.txn.sender === this.player4AlgoAddr.value.address ||
+        this.txn.sender === this.player5AlgoAddr.value.address ||
+        this.txn.sender === this.player6AlgoAddr.value.address
       )
     ) {
       throw Error('Illegal call: Address sender not allowed to vote.');
     }
 
-    if (vote === 1 && this.player1AlgoAddr.value !== globals.zeroAddress) {
+    if (vote === 1 && this.player1AlgoAddr.value.address !== globals.zeroAddress) {
       this.player1ReceivedVotes.value += 1;
-    } else if (vote === 2 && this.player2AlgoAddr.value !== globals.zeroAddress) {
+    } else if (vote === 2 && this.player2AlgoAddr.value.address !== globals.zeroAddress) {
       this.player2ReceivedVotes.value += 1;
-    } else if (vote === 3 && this.player3AlgoAddr.value !== globals.zeroAddress) {
+    } else if (vote === 3 && this.player3AlgoAddr.value.address !== globals.zeroAddress) {
       this.player3ReceivedVotes.value += 1;
-    } else if (vote === 4 && this.player4AlgoAddr.value !== globals.zeroAddress) {
+    } else if (vote === 4 && this.player4AlgoAddr.value.address !== globals.zeroAddress) {
       this.player4ReceivedVotes.value += 1;
-    } else if (vote === 5 && this.player5AlgoAddr.value !== globals.zeroAddress) {
+    } else if (vote === 5 && this.player5AlgoAddr.value.address !== globals.zeroAddress) {
       this.player5ReceivedVotes.value += 1;
-    } else if (vote === 6 && this.player6AlgoAddr.value !== globals.zeroAddress) {
+    } else if (vote === 6 && this.player6AlgoAddr.value.address !== globals.zeroAddress) {
       this.player6ReceivedVotes.value += 1;
     } else {
       throw Error('Invalid vote: Is player still alive?');
     }
 
-    if (this.txn.sender === this.player1AlgoAddr.value && this.player1HasVoted.value === 0) {
+    if (this.txn.sender === this.player1AlgoAddr.value.address && this.player1HasVoted.value === 0) {
       this.player1HasVoted.value = 1;
-    } else if (this.txn.sender === this.player2AlgoAddr.value && this.player2HasVoted.value === 0) {
+    } else if (this.txn.sender === this.player2AlgoAddr.value.address && this.player2HasVoted.value === 0) {
       this.player2HasVoted.value = 1;
-    } else if (this.txn.sender === this.player3AlgoAddr.value && this.player3HasVoted.value === 0) {
+    } else if (this.txn.sender === this.player3AlgoAddr.value.address && this.player3HasVoted.value === 0) {
       this.player3HasVoted.value = 1;
-    } else if (this.txn.sender === this.player4AlgoAddr.value && this.player4HasVoted.value === 0) {
+    } else if (this.txn.sender === this.player4AlgoAddr.value.address && this.player4HasVoted.value === 0) {
       this.player4HasVoted.value = 1;
-    } else if (this.txn.sender === this.player5AlgoAddr.value && this.player5HasVoted.value === 0) {
+    } else if (this.txn.sender === this.player5AlgoAddr.value.address && this.player5HasVoted.value === 0) {
       this.player5HasVoted.value = 1;
-    } else if (this.txn.sender === this.player6AlgoAddr.value && this.player6HasVoted.value === 0) {
+    } else if (this.txn.sender === this.player6AlgoAddr.value.address && this.player6HasVoted.value === 0) {
       this.player6HasVoted.value = 1;
     } else {
       throw Error('Address not allowed to vote.'); // Error state, player has already voted, or not actually player voting
@@ -497,32 +510,32 @@ export class TownHall extends Contract {
     const even = globals.round % 2 === 0;
 
     if (this.player1ReceivedVotes.value > topVotes || (this.player1ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player1AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player1AlgoAddr.value.address;
       topVotes = this.player1ReceivedVotes.value;
     }
 
     if (this.player2ReceivedVotes.value > topVotes || (this.player2ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player2AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player2AlgoAddr.value.address;
       topVotes = this.player2ReceivedVotes.value;
     }
 
     if (this.player3ReceivedVotes.value > topVotes || (this.player3ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player3AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player3AlgoAddr.value.address;
       topVotes = this.player3ReceivedVotes.value;
     }
 
     if (this.player4ReceivedVotes.value > topVotes || (this.player4ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player4AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player4AlgoAddr.value.address;
       topVotes = this.player4ReceivedVotes.value;
     }
 
     if (this.player5ReceivedVotes.value > topVotes || (this.player5ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player5AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player5AlgoAddr.value.address;
       topVotes = this.player5ReceivedVotes.value;
     }
 
     if (this.player6ReceivedVotes.value > topVotes || (this.player6ReceivedVotes.value === topVotes && even)) {
-      this.justEliminatedPlayer.value = this.player6AlgoAddr.value;
+      this.justEliminatedPlayer.value = this.player6AlgoAddr.value.address;
       topVotes = this.player6ReceivedVotes.value;
     }
 
@@ -532,28 +545,28 @@ export class TownHall extends Contract {
     // justEliminatedPlayer should now be the player with the most votes
     // The player with the most votes is Eliminateed; they are removed from the game
 
-    if (this.justEliminatedPlayer.value === this.player1AlgoAddr.value) {
-      this.player1AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player1AlgoAddr.value.address) {
+      this.player1AlgoAddr.value.eliminated = 1;
     }
 
-    if (this.justEliminatedPlayer.value === this.player2AlgoAddr.value) {
-      this.player2AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player2AlgoAddr.value.address) {
+      this.player2AlgoAddr.value.eliminated = 1;
     }
 
-    if (this.justEliminatedPlayer.value === this.player3AlgoAddr.value) {
-      this.player3AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player3AlgoAddr.value.address) {
+      this.player3AlgoAddr.value.eliminated = 1;
     }
 
-    if (this.justEliminatedPlayer.value === this.player4AlgoAddr.value) {
-      this.player4AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player4AlgoAddr.value.address) {
+      this.player4AlgoAddr.value.eliminated = 1;
     }
 
-    if (this.justEliminatedPlayer.value === this.player5AlgoAddr.value) {
-      this.player5AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player5AlgoAddr.value.address) {
+      this.player5AlgoAddr.value.eliminated = 1;
     }
 
-    if (this.justEliminatedPlayer.value === this.player6AlgoAddr.value) {
-      this.player6AlgoAddr.value = globals.zeroAddress;
+    if (this.justEliminatedPlayer.value === this.player6AlgoAddr.value.address) {
+      this.player6AlgoAddr.value.eliminated = 1;
     }
 
     this.playersAlive.value -= 1;
@@ -662,18 +675,18 @@ export class TownHall extends Contract {
       'Error state: Provided address + blinder does NOT match commitment.'
     );
 
-    if (victimAim === this.player1AlgoAddr.value) {
-      this.mafiaVictim.value = this.player1AlgoAddr.value;
-    } else if (victimAim === this.player2AlgoAddr.value) {
-      this.mafiaVictim.value = this.player2AlgoAddr.value;
-    } else if (victimAim === this.player3AlgoAddr.value) {
-      this.mafiaVictim.value = this.player3AlgoAddr.value;
-    } else if (victimAim === this.player4AlgoAddr.value) {
-      this.mafiaVictim.value = this.player4AlgoAddr.value;
-    } else if (victimAim === this.player5AlgoAddr.value) {
-      this.mafiaVictim.value = this.player5AlgoAddr.value;
-    } else if (victimAim === this.player6AlgoAddr.value) {
-      this.mafiaVictim.value = this.player6AlgoAddr.value;
+    if (victimAim === this.player1AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player1AlgoAddr.value.address;
+    } else if (victimAim === this.player2AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player2AlgoAddr.value.address;
+    } else if (victimAim === this.player3AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player3AlgoAddr.value.address;
+    } else if (victimAim === this.player4AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player4AlgoAddr.value.address;
+    } else if (victimAim === this.player5AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player5AlgoAddr.value.address;
+    } else if (victimAim === this.player6AlgoAddr.value.address) {
+      this.mafiaVictim.value = this.player6AlgoAddr.value.address;
     } else {
       this.mafiaVictim.value = globals.zeroAddress; // The mafia failed to provide a valid player!
     }
@@ -711,18 +724,18 @@ export class TownHall extends Contract {
       'Error state: Provided address + blinder does NOT match commitment.'
     );
 
-    if (patientAim === this.player1AlgoAddr.value) {
-      this.doctorPatient.value = this.player1AlgoAddr.value;
-    } else if (patientAim === this.player2AlgoAddr.value) {
-      this.doctorPatient.value = this.player2AlgoAddr.value;
-    } else if (patientAim === this.player3AlgoAddr.value) {
-      this.doctorPatient.value = this.player3AlgoAddr.value;
-    } else if (patientAim === this.player4AlgoAddr.value) {
-      this.doctorPatient.value = this.player4AlgoAddr.value;
-    } else if (patientAim === this.player5AlgoAddr.value) {
-      this.doctorPatient.value = this.player5AlgoAddr.value;
-    } else if (patientAim === this.player6AlgoAddr.value) {
-      this.doctorPatient.value = this.player6AlgoAddr.value;
+    if (patientAim === this.player1AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player1AlgoAddr.value.address;
+    } else if (patientAim === this.player2AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player2AlgoAddr.value.address;
+    } else if (patientAim === this.player3AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player3AlgoAddr.value.address;
+    } else if (patientAim === this.player4AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player4AlgoAddr.value.address;
+    } else if (patientAim === this.player5AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player5AlgoAddr.value.address;
+    } else if (patientAim === this.player6AlgoAddr.value.address) {
+      this.doctorPatient.value = this.player6AlgoAddr.value.address;
     } else {
       this.doctorPatient.value = globals.zeroAddress; // The doctor failed to provide a valid player!
     }
@@ -752,24 +765,24 @@ export class TownHall extends Contract {
 
     // TODO: look into the possibility preventing the doctor saving the same person twice in a row
 
-    if (this.mafiaVictim.value === this.player1AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player1AlgoAddr.value;
-      this.player1AlgoAddr.value = globals.zeroAddress;
-    } else if (this.mafiaVictim.value === this.player2AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player2AlgoAddr.value;
-      this.player2AlgoAddr.value = globals.zeroAddress;
-    } else if (this.mafiaVictim.value === this.player3AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player3AlgoAddr.value;
-      this.player3AlgoAddr.value = globals.zeroAddress;
-    } else if (this.mafiaVictim.value === this.player4AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player4AlgoAddr.value;
-      this.player4AlgoAddr.value = globals.zeroAddress;
-    } else if (this.mafiaVictim.value === this.player5AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player5AlgoAddr.value;
-      this.player5AlgoAddr.value = globals.zeroAddress;
-    } else if (this.mafiaVictim.value === this.player6AlgoAddr.value) {
-      this.justEliminatedPlayer.value = this.player6AlgoAddr.value;
-      this.player6AlgoAddr.value = globals.zeroAddress;
+    if (this.mafiaVictim.value === this.player1AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player1AlgoAddr.value.address;
+      this.player1AlgoAddr.value.eliminated = 1;
+    } else if (this.mafiaVictim.value === this.player2AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player2AlgoAddr.value.address;
+      this.player2AlgoAddr.value.eliminated = 1;
+    } else if (this.mafiaVictim.value === this.player3AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player3AlgoAddr.value.address;
+      this.player3AlgoAddr.value.eliminated = 1;
+    } else if (this.mafiaVictim.value === this.player4AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player4AlgoAddr.value.address;
+      this.player4AlgoAddr.value.eliminated = 1;
+    } else if (this.mafiaVictim.value === this.player5AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player5AlgoAddr.value.address;
+      this.player5AlgoAddr.value.eliminated = 1;
+    } else if (this.mafiaVictim.value === this.player6AlgoAddr.value.address) {
+      this.justEliminatedPlayer.value = this.player6AlgoAddr.value.address;
+      this.player6AlgoAddr.value.eliminated = 1;
     } else {
       throw Error('Error state: Victim must be a player! Should not have entered this state.');
     }
@@ -827,10 +840,57 @@ export class TownHall extends Contract {
     this.gameState.value = stateDayStageVote;
   }
 
+  // @allow.call('DeleteApplication')
   gameOver(): void {
     assert(this.gameState.value === stateGameOver, 'Invalid method call: Game is not in Game Over state.');
-    // TODO: return deposits to all players
-    // TODO: clear out any boxxes
-    // TODO: delete contract
+    this.quickAccessPKBoxes(0).delete(); // Delete the PK Box
+    this.hashFilter(rawBytes(sha256(this.mafiaKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.doctorKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.farmerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.butcherKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.innkeepKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.grocerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+
+    const returnAmount = SLASH_DEPOSIT_AMOUNT - globals.minTxnFee; // Return the slash deposit amount minus the minimum transaction fee
+
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player1AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player2AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player3AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player4AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player5AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+
+    sendPayment({
+      amount: returnAmount,
+      receiver: this.player6AlgoAddr.value.address,
+      fee: globals.minTxnFee,
+    });
+  }
+
+  deleteApplication(): void {
+    assert(this.gameState.value === stateGameOver, 'Invalid method call: Game is not in Game Over state.');
+    sendPayment({ closeRemainderTo: this.creatorAddress.value });
   }
 }

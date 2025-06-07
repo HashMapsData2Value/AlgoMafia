@@ -162,14 +162,23 @@ describe('TownHall', () => {
     for (const player of players) {
       await joinGameLobby(player.day_client, player.day_algo_address.addr, player.bls_private_key);
     }
+    expect((await appClient.state.global.player1AlgoAddr())![0]).toBe(players[0].day_algo_address.addr);
+    expect((await appClient.state.global.player1AlgoAddr())![1]).toBe(BigInt(0));
 
-    expect(await appClient.state.global.player1AlgoAddr()).toBe(players[0].day_algo_address.addr);
-    expect(await appClient.state.global.player2AlgoAddr()).toBe(players[1].day_algo_address.addr);
-    expect(await appClient.state.global.player3AlgoAddr()).toBe(players[2].day_algo_address.addr);
-    expect(await appClient.state.global.player4AlgoAddr()).toBe(players[3].day_algo_address.addr);
-    expect(await appClient.state.global.player5AlgoAddr()).toBe(players[4].day_algo_address.addr);
-    expect(await appClient.state.global.player6AlgoAddr()).toBe(players[5].day_algo_address.addr);
+    expect((await appClient.state.global.player2AlgoAddr())![0]).toBe(players[1].day_algo_address.addr);
+    expect((await appClient.state.global.player2AlgoAddr())![1]).toBe(BigInt(0));
 
+    expect((await appClient.state.global.player3AlgoAddr())![0]).toBe(players[2].day_algo_address.addr);
+    expect((await appClient.state.global.player3AlgoAddr())![1]).toBe(BigInt(0));
+
+    expect((await appClient.state.global.player4AlgoAddr())![0]).toBe(players[3].day_algo_address.addr);
+    expect((await appClient.state.global.player4AlgoAddr())![1]).toBe(BigInt(0));
+
+    expect((await appClient.state.global.player5AlgoAddr())![0]).toBe(players[4].day_algo_address.addr);
+    expect((await appClient.state.global.player5AlgoAddr())![1]).toBe(BigInt(0));
+
+    expect((await appClient.state.global.player6AlgoAddr())![0]).toBe(players[5].day_algo_address.addr);
+    expect((await appClient.state.global.player6AlgoAddr())![1]).toBe(BigInt(0));
     const ring = await appClient.state.box.quickAccessPkBoxes.value(0);
     if (!ring) {
       throw new Error('ring is undefined');
@@ -284,7 +293,7 @@ describe('TownHall', () => {
     /// <----------- ENTERED DayStageEliminate ----------->
     // Player 3 is eliminated
     await players[0].day_client.send.dayStageEliminate(); // Doesn't matter who calls it
-    expect(await appClient.state.global.player3AlgoAddr()).toEqual(ZERO_ADDRESS);
+    expect((await appClient.state.global.player3AlgoAddr())![1]).toEqual(BigInt(1));
     expect(Number(await appClient.state.global.playersAlive())).toEqual(5);
     expect(await appClient.state.global.justEliminatedPlayer()).toStrictEqual(players[2].day_algo_address.addr);
     expect(Number((await appClient.send.getGameState()).return)).toEqual(stateDayStageUnmasking); // Advanced to the DayStageUnmasking stage
@@ -386,7 +395,7 @@ describe('TownHall', () => {
     /// <----------- ENTERED DayStageEliminate----------->
     // Player 6 is eliminated
     await players[5].day_client.send.dayStageEliminate(); // Doesn't matter who calls it
-    expect(await appClient.state.global.player6AlgoAddr()).toEqual(ZERO_ADDRESS);
+    expect((await appClient.state.global.player6AlgoAddr())![1]).toEqual(BigInt(1));
     expect(Number(await appClient.state.global.playersAlive())).toEqual(3);
     expect(await appClient.state.global.justEliminatedPlayer()).toStrictEqual(players[5].day_algo_address.addr);
     expect(Number((await appClient.send.getGameState()).return)).toEqual(stateDayStageUnmasking); // Advanced to the DayStageUnmasking stage
@@ -467,6 +476,16 @@ describe('TownHall', () => {
     expect(await appClient.state.global.mafiaVictim()).toEqual(ZERO_ADDRESS);
     expect(await appClient.state.global.doctorPatient()).toEqual(ZERO_ADDRESS);
     expect(Number((await appClient.send.getGameState()).return)).toEqual(stateGameOver); // Advanced to Game Over
+
+    await players[0].day_client
+      .newGroup()
+      .gameOver({ args: {} })
+      .dummyOpUp({
+        args: { i: 1 },
+      })
+      .send();
+
+    await players[0].day_client.send.delete.deleteApplication({ args: {}, extraFee: (1_000).microAlgos() });
   });
 });
 
