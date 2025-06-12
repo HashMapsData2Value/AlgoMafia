@@ -262,6 +262,13 @@
       "returns": {
         "type": "void"
       }
+    },
+    {
+      "name": "deleteApplication",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
     }
   ]
 }

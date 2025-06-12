@@ -23,9 +23,12 @@ const usePlayersState = (playerObject: Player) => {
         playerObject.day_client.state.global.player5AlgoAddr()!,
         playerObject.day_client.state.global.player6AlgoAddr()!,
       ]
-      const fetchedPlayers = (await Promise.all(playerPromises)).filter((res) => typeof res === 'string')
-      // Filter out any players that are equal to the zeroAddress
-      const validPlayers = fetchedPlayers.filter((player) => player !== ZERO_ADDRESS)
+      const fetchedPlayers = (await Promise.all(playerPromises)).filter((p): p is [string, bigint] => p !== undefined)
+
+      // Zero Address for unassigned players and status of 0 to signify eliminated status
+      const validPlayers = fetchedPlayers
+        .filter((playerRecord) => playerRecord[0] !== ZERO_ADDRESS && Number(playerRecord[1]) === 0)
+        .map((playerRecord) => playerRecord[0])
 
       return {
         validPlayers,
@@ -35,7 +38,6 @@ const usePlayersState = (playerObject: Player) => {
     refetchInterval: 2800, // Shorter interval for basic game state
   })
 
-  // Query 2: Voting status, updated less frequently
   const votingQuery = useQuery({
     queryKey: ['votingStatus'],
     queryFn: async () => {
@@ -50,7 +52,7 @@ const usePlayersState = (playerObject: Player) => {
       const playerHasVoted = (await Promise.all(hasVotedPromises)).filter((res) => typeof res === 'bigint')
       return playerHasVoted
     },
-    refetchInterval: 2800, // Longer interval for voting status
+    refetchInterval: 2800,
     enabled: playersQuery.data !== undefined, // Only run once players are loaded
   })
 
@@ -78,14 +80,11 @@ const usePlayersState = (playerObject: Player) => {
       setPlayers(playersQuery.data.validPlayers)
 
       const myDayAddress = playerObject.day_algo_address.addr.toString()
-      const activePlayerIndex = playersQuery.data.allPlayers.findIndex((player) => player === myDayAddress)
+      const activePlayerIndex = playersQuery.data.allPlayers
+        .filter((playerRecord) => Number(playerRecord[1]) === 0)
+        .findIndex((player) => player[0] === myDayAddress)
 
       setPlayerIsDead(activePlayerIndex === -1)
-
-      // Log player count for debugging
-      if (playersQuery.data.validPlayers.length === 6) {
-        console.log('All players have joined the game.')
-      }
     }
   }, [playersQuery.data, playerObject.day_algo_address.addr])
 
@@ -93,7 +92,7 @@ const usePlayersState = (playerObject: Player) => {
   useEffect(() => {
     if (votingQuery.data && playersQuery.data) {
       const myDayAddress = playerObject.day_algo_address.addr.toString()
-      const activePlayerIndex = playersQuery.data.allPlayers.findIndex((player) => player === myDayAddress)
+      const activePlayerIndex = playersQuery.data.allPlayers.findIndex((player) => player[0] === myDayAddress)
 
       if (activePlayerIndex !== -1 && votingQuery.data[activePlayerIndex]) {
         setPlayerHasVoted(Number(votingQuery.data[activePlayerIndex]) !== 0)

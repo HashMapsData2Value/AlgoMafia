@@ -41,7 +41,7 @@ const DayStageVote: React.FC<DayStageVoteProps> = ({ playerObject }) => {
               currentPlayerAddress={playerObject.day_algo_address.addr.toString()}
               onSelect={(player: string) => {
                 // Map the selected player back to their original number (1 to 6)
-                const playerNumber = allPlayers.findIndex((p) => p === player) + 1
+                const playerNumber = allPlayers.findIndex((p) => p[0] === player) + 1
                 if (playerNumber > 0) {
                   console.log(`Selected player: ${player}, Player number: ${playerNumber}`)
                   handleVote(playerNumber)
