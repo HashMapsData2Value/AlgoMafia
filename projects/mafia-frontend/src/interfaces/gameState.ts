@@ -12,4 +12,5 @@ export enum GameState {
   DawnStageDeadOrSaved = DawnStageDoctorReveal + 1,
   DawnStageUnmasking = DawnStageDeadOrSaved + 1,
   GameOver = DawnStageUnmasking + 1,
+  AssignRoleTimeout = GameOver + 1,
 }

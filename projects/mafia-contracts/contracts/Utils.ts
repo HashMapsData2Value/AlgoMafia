@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { AlgorandClient } from '@algorandfoundation/algokit-utils';
 import { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
 import algosdk from 'algosdk';
@@ -306,4 +307,25 @@ export async function assignRole(
       extraFee: (1000 * (length + 1)).microAlgos(),
     })
     .send();
+}
+
+export async function advanceRounds(
+  algorand: AlgorandClient,
+  account: TransactionSignerAccount & {
+    account: algosdk.Account;
+  },
+  numRounds: number,
+  amount: number = 1000
+) {
+  for (let i = 0; i < numRounds; i += 1) {
+    console.log(`waiting round ${i + 1} of ${numRounds}`);
+
+    await algorand.send.payment({
+      sender: account.addr,
+      receiver: account.addr,
+      amount: amount.microAlgo(),
+      signer: account.signer,
+      note: `Round advancement ${i + 1}/${numRounds}`,
+    });
+  }
 }

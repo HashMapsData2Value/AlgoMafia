@@ -6,6 +6,7 @@ import {
   BLS12381G1_LENGTH,
   LSIG_FUND_AMOUNT,
   SLASH_DEPOSIT_AMOUNT,
+  ROUNDS_TO_TIMEOUT,
   stateSetLSIGFunderAddress,
   stateAssignRole,
   stateDawnStageDeadOrSaved,
@@ -19,6 +20,7 @@ import {
   stateJoinGameLobby,
   stateNightStageDoctorCommit,
   stateNightStageMafiaCommit,
+  stateAssignRoleTimeout,
 } from './Constants';
 import { RingLinkLSig0 } from './RingLinkLSig0.algo';
 import { RingLinkLSig1 } from './RingLinkLSig1.algo';
@@ -130,6 +132,8 @@ export class TownHall extends Contract {
 
   gameState = GlobalStateKey<uint64>();
 
+  lastCommitedRound = GlobalStateKey<uint64>();
+
   createApplication(): void {
     this.creatorAddress.value = this.txn.sender;
 
@@ -173,6 +177,7 @@ export class TownHall extends Contract {
     this.doctorPatient.value = globals.zeroAddress;
 
     this.gameState.value = 0;
+    this.lastCommitedRound.value = 0;
   }
 
   /** Dummy Op Up
@@ -294,6 +299,10 @@ export class TownHall extends Contract {
     this.playersJoined.value += 1;
 
     assert(this.lsigFunderAddress.value !== globals.zeroAddress, 'Error state: LSig Funder Address not set!');
+    assert(
+      this.lastCommitedRound.value === 0,
+      'Last commited round should not be set until all players have joined the game'
+    );
 
     // Fund the LSIG
     sendPayment({
@@ -324,6 +333,7 @@ export class TownHall extends Contract {
     if (this.player6AlgoAddr.value.address === globals.zeroAddress) {
       this.player6AlgoAddr.value.address = this.txn.sender;
       this.gameState.value = stateAssignRole; // Go to next stage.
+      this.lastCommitedRound.value = globals.round;
       return;
     }
 
@@ -385,43 +395,52 @@ export class TownHall extends Contract {
       amount: LSIG_FUND_AMOUNT,
     });
 
-    // TODO: introduce some type of randomness here, so that it is more difficult for someone
-    // to be able to influence which role they will get. Currently it is just whichever player
-    // was able to get their transaction in first, and if they happen to be the block proposer
-    // they will be able to control the order of transactions.
-
+    if (globals.round > this.lastCommitedRound.value + ROUNDS_TO_TIMEOUT) {
+      this.gameState.value = stateAssignRoleTimeout;
+      return;
+    }
     if (this.mafia.value === globals.zeroAddress) {
+      // TODO: introduce some type of randomness here, so that it is more difficult for someone
+      // to be able to influence which role they will get. Currently it is just whichever player
+      // was able to get their transaction in first, and if they happen to be the block proposer
+      // they will be able to control the order of transactions.
+
       this.mafia.value = this.txn.sender;
       this.mafiaKeyImage.value = keyImage;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
     if (this.doctor.value === globals.zeroAddress) {
       this.doctor.value = this.txn.sender;
       this.doctorKeyImage.value = keyImage;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
     if (this.farmer.value === globals.zeroAddress) {
       this.farmer.value = this.txn.sender;
       this.farmerKeyImage.value = keyImage;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
     if (this.butcher.value === globals.zeroAddress) {
       this.butcher.value = this.txn.sender;
       this.butcherKeyImage.value = keyImage;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
     if (this.innkeep.value === globals.zeroAddress) {
       this.innkeep.value = this.txn.sender;
       this.innkeepKeyImage.value = keyImage;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
     if (this.grocer.value === globals.zeroAddress) {
       this.grocer.value = this.txn.sender;
       this.grocerKeyImage.value = keyImage;
       this.gameState.value = stateDayStageVote; // Go to day
+      this.lastCommitedRound.value = globals.round;
       return;
     }
-
     throw Error('Invalid state! Error, game should have moved to the next stage already.');
   }
 
@@ -601,6 +620,7 @@ export class TownHall extends Contract {
       // The townsfolk have won!
       this.mafia.value = globals.zeroAddress;
       this.gameState.value = stateGameOver;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
 
@@ -615,10 +635,12 @@ export class TownHall extends Contract {
       // The mafia has won!
       // This assumes that the mafia is 1 of the remaining plays.
       this.gameState.value = stateGameOver;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
 
     this.gameState.value = stateNightStageMafiaCommit; // Go to next stage
+    this.lastCommitedRound.value = globals.round;
   }
 
   nightStageMafiaCommit(commitment: bytes): void {
@@ -826,6 +848,7 @@ export class TownHall extends Contract {
       // The townsfolk have won!
       this.gameState.value = stateGameOver;
       this.mafia.value = globals.zeroAddress;
+      this.lastCommitedRound.value = globals.round;
       return;
     }
 
@@ -838,21 +861,15 @@ export class TownHall extends Contract {
     this.justEliminatedPlayer.value = globals.zeroAddress;
 
     this.gameState.value = stateDayStageVote;
+    this.lastCommitedRound.value = globals.round;
   }
 
   // @allow.call('DeleteApplication')
   gameOver(): void {
     assert(this.gameState.value === stateGameOver, 'Invalid method call: Game is not in Game Over state.');
-    this.quickAccessPKBoxes(0).delete(); // Delete the PK Box
-    this.hashFilter(rawBytes(sha256(this.mafiaKeyImage.value))).delete(); // Delete the Key Image from the hash filter
-    this.hashFilter(rawBytes(sha256(this.doctorKeyImage.value))).delete(); // Delete the Key Image from the hash filter
-    this.hashFilter(rawBytes(sha256(this.farmerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
-    this.hashFilter(rawBytes(sha256(this.butcherKeyImage.value))).delete(); // Delete the Key Image from the hash filter
-    this.hashFilter(rawBytes(sha256(this.innkeepKeyImage.value))).delete(); // Delete the Key Image from the hash filter
-    this.hashFilter(rawBytes(sha256(this.grocerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.deleteBoxStorage();
 
     const returnAmount = SLASH_DEPOSIT_AMOUNT - globals.minTxnFee; // Return the slash deposit amount minus the minimum transaction fee
-
     sendPayment({
       amount: returnAmount,
       receiver: this.player1AlgoAddr.value.address,
@@ -889,8 +906,82 @@ export class TownHall extends Contract {
     });
   }
 
+  /*
+This timeout is triggered when players fail to assign themselves roles after joining the lobby and depositing their stake.
+A malicious player can exploit this stage by refusing to select a role, effectively griefing the game.
+When a timeout occurs during role assignment, this method identifies all players who have successfully assigned themselves roles and refunds their deposits to their night addresses.
+The frontend can then transfer these funds from the night addresses back to the users' active wallet addresses.
+*/
+  handleAssignRolesTimeout(): void {
+    assert(
+      this.gameState.value === stateAssignRoleTimeout,
+      'Invalid method call: Game is not in Assign Role Timeout state'
+    );
+
+    const honestPlayers = this.getHonestRoles();
+    this.quickAccessPKBoxes(0).delete(); // Delete the PK Box
+
+    const returnAmount = wideRatio([SLASH_DEPOSIT_AMOUNT, 6], [honestPlayers.length]) - globals.minTxnFee;
+    for (let i = 0; i < honestPlayers.length; i += 1) {
+      if (globals.opcodeBudget < 400) {
+        increaseOpcodeBudget();
+      }
+      sendPayment({
+        amount: returnAmount,
+        receiver: honestPlayers[i],
+        fee: globals.minTxnFee,
+      });
+    }
+  }
+
+  triggerTimeoutState(): void {
+    assert(globals.round > this.lastCommitedRound.value + ROUNDS_TO_TIMEOUT);
+    if (this.getHonestRoles().length < 6) this.gameState.value = stateAssignRoleTimeout;
+    // This should be expanded out to check for more timeout scenarious
+  }
+
+  private getHonestRoles(): Address[] {
+    const honestPlayers: Address[] = [];
+
+    if (this.mafia.value !== globals.zeroAddress) {
+      honestPlayers.push(this.mafia.value);
+      this.hashFilter(rawBytes(sha256(this.mafiaKeyImage.value))).delete();
+    }
+    if (this.doctor.value !== globals.zeroAddress) {
+      honestPlayers.push(this.doctor.value);
+      this.hashFilter(rawBytes(sha256(this.doctorKeyImage.value))).delete();
+    }
+    if (this.butcher.value !== globals.zeroAddress) {
+      honestPlayers.push(this.butcher.value);
+      this.hashFilter(rawBytes(sha256(this.butcherKeyImage.value))).delete();
+    }
+    if (this.innkeep.value !== globals.zeroAddress) {
+      honestPlayers.push(this.innkeep.value);
+      this.hashFilter(rawBytes(sha256(this.innkeepKeyImage.value))).delete();
+    }
+    if (this.farmer.value !== globals.zeroAddress) {
+      honestPlayers.push(this.farmer.value);
+      this.hashFilter(rawBytes(sha256(this.farmerKeyImage.value))).delete();
+    }
+    if (this.grocer.value !== globals.zeroAddress) {
+      honestPlayers.push(this.grocer.value);
+      this.hashFilter(rawBytes(sha256(this.grocerKeyImage.value))).delete();
+    }
+    return honestPlayers;
+  }
+
+  private deleteBoxStorage(): void {
+    this.quickAccessPKBoxes(0).delete(); // Delete the PK Box
+    this.hashFilter(rawBytes(sha256(this.mafiaKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.doctorKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.farmerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.butcherKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.innkeepKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+    this.hashFilter(rawBytes(sha256(this.grocerKeyImage.value))).delete(); // Delete the Key Image from the hash filter
+  }
+
   deleteApplication(): void {
-    assert(this.gameState.value === stateGameOver, 'Invalid method call: Game is not in Game Over state.');
+    assert(this.gameState.value >= stateGameOver, 'Invalid method call: Game is not in Game Over state.');
     sendPayment({ closeRemainderTo: this.creatorAddress.value });
   }
 }
