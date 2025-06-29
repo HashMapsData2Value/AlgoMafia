@@ -36,8 +36,26 @@ export class RingLinkLSig3 extends LogicSig {
 
     // Added because the hashPointToPoint function could not be imported
     // HashPointToPoint section
-    const hash = keccak256(pk);
-    const fpElement = btobigint(hash) % btobigint(hex(BLS12381_FIELD_MODULUS_HEX));
+    // Implementation of expand_msg_xmd in AVM START:
+    const zPad = hex(
+      '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    ); // 64 bytes of zeros for SHA-256
+    const lIbStr = hex('0030'); // 2 bytes: 0x00, 0x30 for 48
+    const dstPrime = hex('424c53313233383147315f584d443a5348412d3235365f535357555f524f5f1f'); // 'BLS12381G1_XMD:SHA-256_SSWU_RO_' '32'
+    const msgPrime = concat(concat(concat(concat(zPad, pk), lIbStr), hex('00')), dstPrime);
+
+    // First block
+    const b0 = sha256(msgPrime);
+    // Second block (counter = 1)
+    const b1 = sha256(concat(concat(b0, hex('01')), dstPrime));
+    // Third block (counter = 2), RFC-compliant: XOR b0 and b1
+    const b2 = sha256(concat(concat(bitwiseXor(b0, b1), hex('02')), dstPrime));
+
+    // Concatenate b1 and b2 to get 64 bytes, then slice to 48 bytes
+    const uniformBytes = concat(extract3(b1, 0, 32), extract3(b2, 0, 16));
+    // Implementation of ExpandMsgXmd in AVM END.
+
+    const fpElement = btobigint(uniformBytes) % btobigint(hex(BLS12381_FIELD_MODULUS_HEX));
     // ^This field modulus is so much larger than 2^256 that it will never be required to reduce modulo it
     // This needs to be looked over and converted the ExpandMsgXmd method to properly implement EncodeToG1
     const hp2p = ecMapTo('BLS12_381g1', rawBytes(fpElement));
@@ -56,9 +74,7 @@ export class RingLinkLSig3 extends LogicSig {
      ** Take hash of the concatenated bytes and then mod |fr|
      ** Then return the results.
      */
-    const h = rawBytes(
-      btobigint(keccak256(concat(concat(msg, left), right))) % btobigint(hex(BLS12381_CURVE_ORDER_HEX))
-    );
+    const h = rawBytes(btobigint(sha256(concat(concat(msg, left), right))) % btobigint(hex(BLS12381_CURVE_ORDER_HEX)));
 
     assert(btobigint(h) === btobigint(cExpected));
 

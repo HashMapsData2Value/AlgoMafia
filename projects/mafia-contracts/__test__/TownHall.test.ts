@@ -88,14 +88,14 @@ describe('TownHall', () => {
       ]),
       new Uint8Array([
         // v (= g^r), the point-version of the nonce
-        4, 71, 43, 242, 239, 119, 227, 5, 14, 23, 89, 101, 39, 197, 220, 59, 233, 222, 216, 118, 165, 92, 34, 36, 196,
-        91, 201, 8, 156, 23, 188, 204, 64, 11, 131, 129, 195, 54, 74, 222, 15, 232, 136, 22, 104, 151, 112, 31, 0, 77,
-        94, 47, 187, 221, 178, 159, 61, 224, 239, 254, 81, 11, 187, 84, 217, 79, 164, 24, 211, 231, 28, 138, 31, 95,
-        182, 94, 162, 175, 67, 172, 71, 49, 220, 209, 161, 100, 112, 55, 9, 66, 77, 227, 139, 120, 221, 207,
+        9, 154, 81, 24, 127, 34, 104, 109, 168, 64, 29, 70, 123, 48, 159, 224, 210, 220, 227, 20, 130, 119, 221, 12, 19,
+        91, 196, 217, 135, 88, 141, 213, 72, 116, 211, 145, 0, 134, 102, 70, 90, 128, 12, 138, 63, 63, 32, 18, 18, 152,
+        234, 181, 17, 63, 194, 191, 76, 12, 139, 168, 129, 237, 189, 103, 49, 128, 122, 84, 105, 173, 21, 20, 157, 36,
+        101, 109, 141, 47, 76, 214, 33, 229, 134, 136, 21, 8, 122, 247, 3, 205, 57, 178, 96, 49, 138, 59,
       ]), // z, the core proof
       new Uint8Array([
-        104, 3, 67, 33, 21, 217, 58, 26, 12, 171, 12, 50, 3, 19, 73, 21, 196, 233, 226, 35, 249, 172, 101, 253, 145,
-        215, 177, 107, 178, 242, 108, 35,
+        92, 93, 210, 187, 0, 6, 61, 179, 28, 250, 212, 93, 135, 244, 29, 46, 17, 88, 0, 184, 75, 39, 250, 125, 104, 34,
+        51, 53, 251, 203, 164, 180,
       ]),
     ];
 
@@ -107,6 +107,11 @@ describe('TownHall', () => {
       .simulate({
         extraOpcodeBudget: 5650,
       });
+
+    const result = simulateNIZKCall.returns[0];
+    if (result === undefined) {
+      throw new Error('result is undefined');
+    }
 
     expect(simulateNIZKCall.returns[0]).toBe(true);
   });
@@ -121,8 +126,9 @@ describe('TownHall', () => {
 
     const expectedPoint = algoring.to_pxpy(
       new Uint8Array([
-        153, 147, 4, 225, 116, 61, 24, 64, 22, 31, 12, 65, 244, 78, 19, 85, 234, 199, 84, 11, 186, 208, 132, 146, 106,
-        8, 145, 4, 22, 2, 197, 91, 24, 136, 80, 147, 150, 180, 136, 6, 63, 189, 9, 178, 238, 112, 220, 167,
+        143, 205, 156, 80, 48, 87, 140, 252, 22, 156, 250, 71, 228, 133, 49, 209, 171, 69, 53, 56, 102, 168, 255, 233,
+        205, 220, 196, 9, 81, 238, 208, 205, 237, 152, 76, 201, 167, 192, 185, 81, 241, 168, 190, 223, 17, 163, 211,
+        191,
       ])
     );
 
@@ -488,45 +494,3 @@ describe('TownHall', () => {
     await players[0].day_client.send.delete.deleteApplication({ args: {}, extraFee: (1_000).microAlgos() });
   });
 });
-
-/**
-
-
-  ## Create a new game
-    * create TownHall contract
-    * create lsig funder contract
-    * Set the slots for the roles: Mafia (1), Townsfolk (3), Doctor (1)
-    * Set the minimum deposit for the game
-
-  ## Lobby stage
-    * each player provides their BLS12_381 public key
-    * each player deposits a minimum required amount of ALGO
-    * each player also deposits a minimum required amount of ALGO in the lsig to fund the ring sigs
-
-  ## Assign the Roles
-    * each player produces a ring sig in a virgin account, using an lsig funder.
-    * the contract (randomly?) assigns the roles to the players
-
-  ## Day Stage
-    * if there are equal or more mafia than townsfolk+doctor, the mafia wins
-    * each player votes for a player
-    * the player with the most votes is eliminated; they are removed from the game
-    * the player reveals their role to retrieve their deposit
-    * if there are no mafia left, the townsfolk win
-
-  ## Night Stage
-    * the mafia commit to a user by generating a random nonce, concatenating it with the user's public key, hashing it and sending it to the contract
-    * the doctor commits to a user by generating a random nonce, concatenating it with the user's public key, and hashing it and sending it to the contract
-
-  ## Dawn Stage
-    * the mafia and doctor reveal heir commitment. If the doctor committed to the same player as the mafia, the user is saved. Otherwise, the player is killed.
-
-  ## End Game
-    * Decommision the contract
-    * Return any remaining funds to the players
-
-  Repeat ^
-
-
-
- */
