@@ -121,8 +121,9 @@ describe('TownHall', () => {
 
     const expectedPoint = algoring.to_pxpy(
       new Uint8Array([
-        153, 147, 4, 225, 116, 61, 24, 64, 22, 31, 12, 65, 244, 78, 19, 85, 234, 199, 84, 11, 186, 208, 132, 146, 106,
-        8, 145, 4, 22, 2, 197, 91, 24, 136, 80, 147, 150, 180, 136, 6, 63, 189, 9, 178, 238, 112, 220, 167,
+        143, 205, 156, 80, 48, 87, 140, 252, 22, 156, 250, 71, 228, 133, 49, 209, 171, 69, 53, 56, 102, 168, 255, 233,
+        205, 220, 196, 9, 81, 238, 208, 205, 237, 152, 76, 201, 167, 192, 185, 81, 241, 168, 190, 223, 17, 163, 211,
+        191,
       ])
     );
 
@@ -488,45 +489,3 @@ describe('TownHall', () => {
     await players[0].day_client.send.delete.deleteApplication({ args: {}, extraFee: (1_000).microAlgos() });
   });
 });
-
-/**
-
-
-  ## Create a new game
-    * create TownHall contract
-    * create lsig funder contract
-    * Set the slots for the roles: Mafia (1), Townsfolk (3), Doctor (1)
-    * Set the minimum deposit for the game
-
-  ## Lobby stage
-    * each player provides their BLS12_381 public key
-    * each player deposits a minimum required amount of ALGO
-    * each player also deposits a minimum required amount of ALGO in the lsig to fund the ring sigs
-
-  ## Assign the Roles
-    * each player produces a ring sig in a virgin account, using an lsig funder.
-    * the contract (randomly?) assigns the roles to the players
-
-  ## Day Stage
-    * if there are equal or more mafia than townsfolk+doctor, the mafia wins
-    * each player votes for a player
-    * the player with the most votes is eliminated; they are removed from the game
-    * the player reveals their role to retrieve their deposit
-    * if there are no mafia left, the townsfolk win
-
-  ## Night Stage
-    * the mafia commit to a user by generating a random nonce, concatenating it with the user's public key, hashing it and sending it to the contract
-    * the doctor commits to a user by generating a random nonce, concatenating it with the user's public key, and hashing it and sending it to the contract
-
-  ## Dawn Stage
-    * the mafia and doctor reveal heir commitment. If the doctor committed to the same player as the mafia, the user is saved. Otherwise, the player is killed.
-
-  ## End Game
-    * Decommision the contract
-    * Return any remaining funds to the players
-
-  Repeat ^
-
-
-
- */
