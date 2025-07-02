@@ -27,7 +27,7 @@ export const stateAssignRoleTimeout = stateGameOver + 1
 
 export const LSIG_FUND_AMOUNT = 150_000
 export const SLASH_DEPOSIT_AMOUNT = 1_000_000
-export const ROUNDS_TO_TIMEOUT = 1
+export const ROUNDS_TO_TIMEOUT = 2
 
 export const jdenticonConfig = {
   backColor: '#000000',
