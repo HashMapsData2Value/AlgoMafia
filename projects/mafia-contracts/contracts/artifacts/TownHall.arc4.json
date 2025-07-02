@@ -264,20 +264,6 @@
       }
     },
     {
-      "name": "handleAssignRolesTimeout",
-      "args": [],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
-      "name": "triggerTimeoutState",
-      "args": [],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
       "name": "deleteApplication",
       "args": [],
       "returns": {

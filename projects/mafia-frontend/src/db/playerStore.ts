@@ -74,14 +74,3 @@ export const getPlayersData = async (playerId: StorageKey): Promise<IDBPlayer[] 
   const result = await db.get(STORE_NAME, playerId)
   return result || null
 }
-
-/**
- * Get all player data from IndexedDB across all keys
- * @returns Array of all IDBPlayer objects in the store
- */
-export const getAllPlayersData = async (): Promise<IDBPlayer[]> => {
-  const db = await initDB()
-  const allEntries = await db.getAll(STORE_NAME)
-
-  return allEntries.flat()
-}

@@ -26,5 +26,3 @@ export const stateDawnStageDoctorReveal = stateDawnStageMafiaReveal + 1;
 export const stateDawnStageDeadOrSaved = stateDawnStageDoctorReveal + 1;
 export const stateDawnStageUnmasking = stateDawnStageDeadOrSaved + 1;
 export const stateGameOver = stateDawnStageUnmasking + 1;
-export const stateAssignRoleTimeout = stateGameOver + 1;
-export const ROUNDS_TO_TIMEOUT = 2;

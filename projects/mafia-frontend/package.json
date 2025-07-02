@@ -42,7 +42,7 @@
     "@tanstack/react-query": "5.74.3",
     "@txnlab/use-wallet": "4.0.0",
     "@txnlab/use-wallet-react": "4.0.0",
-    "algoring-ts": "github:HashMapsData2Value/algoring-ts#main",
+    "algoring-ts": "github:HashMapsData2Value/algoring-ts",
     "algosdk": "3.0.0",
     "daisyui": "4.0.0",
     "idb": "8.0.2",
@@ -51,7 +51,6 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-icons": "5.5.0",
-    "react-router-dom": "^7.6.3",
     "tslib": "2.6.2"
   },
   "scripts": {

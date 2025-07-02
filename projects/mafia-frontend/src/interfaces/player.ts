@@ -76,9 +76,19 @@ export class Player {
   }
 
   static async fromIDB(idbPlayer: IDBPlayer, appId: bigint): Promise<Player> {
+    const token = await deriveTokenFromPassSalt('test', idbPlayer.salt)
+
+    const decryptedDayKey = Buffer.from(
+      await crypto.subtle.decrypt({ name: 'AES-GCM', iv: idbPlayer.iv }, token, idbPlayer.day_algo_address.keyData),
+    )
+
+    const decryptedNightKey = Buffer.from(
+      await crypto.subtle.decrypt({ name: 'AES-GCM', iv: idbPlayer.iv }, token, idbPlayer.night_algo_address.keyData),
+    )
+
     const player = new Player(appId)
-    player.day_algo_address = await getStoredIDBAccount(idbPlayer, 'day')
-    player.night_algo_address = await getStoredIDBAccount(idbPlayer, 'night')
+    player.day_algo_address = algorand.account.fromMnemonic(algosdk.mnemonicFromSeed(decryptedDayKey.subarray(0, 32)))
+    player.night_algo_address = algorand.account.fromMnemonic(algosdk.mnemonicFromSeed(decryptedNightKey.subarray(0, 32)))
     player.bls_private_key = idbPlayer.bls_private_key
     player.bls_public_key = idbPlayer.bls_public_key
     player.target
@@ -111,20 +121,6 @@ export class Player {
 
     return player
   }
-}
-
-export async function getStoredIDBAccount(
-  idbPlayer: IDBPlayer,
-  type: 'day' | 'night',
-): Promise<TransactionSignerAccount & { account: algosdk.Account }> {
-  const token = await deriveTokenFromPassSalt('test', idbPlayer.salt)
-
-  const decryptedKey =
-    type === 'day'
-      ? Buffer.from(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: idbPlayer.iv }, token, idbPlayer.day_algo_address.keyData))
-      : Buffer.from(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: idbPlayer.iv }, token, idbPlayer.night_algo_address.keyData))
-
-  return algorand.account.fromMnemonic(algosdk.mnemonicFromSeed(decryptedKey.subarray(0, 32)))
 }
 
 // This function and most of the encryption process was made possible by https://github.com/Algorand-Developer-Retreat/embedded-wallet-demo
